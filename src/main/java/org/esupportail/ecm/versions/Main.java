@@ -30,5 +30,14 @@ public class Main extends ModuleRoot {
     return getTemplate("index1.ftl");
   }
 
+  /**
+   * Default view
+   */
+  @GET
+  @Path("{name}")
+  public Object doGet(@PathParam("name") String name) {
+    return getView("index").arg("name", name);
+  }
+  
 }
 
