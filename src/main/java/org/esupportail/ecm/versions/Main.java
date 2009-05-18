@@ -1,6 +1,5 @@
 package org.esupportail.ecm.versions;
 
-import java.io.*;
 import javax.ws.rs.*;
 import javax.ws.rs.core.*;
 
@@ -12,7 +11,6 @@ import org.nuxeo.ecm.core.api.CoreSession;
 import org.nuxeo.ecm.core.api.DocumentModel;
 import org.nuxeo.ecm.core.api.DocumentModelList;
 import org.nuxeo.ecm.core.api.DocumentRef;
-import org.nuxeo.ecm.core.api.DocumentResolver;
 import org.nuxeo.ecm.core.api.IdRef;
 import org.nuxeo.ecm.core.api.model.Property;
 import org.nuxeo.ecm.core.api.model.PropertyException;
@@ -20,10 +18,8 @@ import org.nuxeo.ecm.core.rest.*;
 import org.nuxeo.ecm.webengine.model.*;
 import org.nuxeo.ecm.webengine.model.impl.*;
 import org.nuxeo.ecm.webengine.model.exceptions.*;
-import org.nuxeo.ecm.webengine.*;
 
 
-import sun.util.logging.resources.logging;
 
 @WebObject(type="esupversions")
 @Produces("text/html; charset=UTF-8")
@@ -39,10 +35,6 @@ public class Main extends ModuleRoot {
     return getView("index");
   }
 
-  /** For download part, see org.nuxeo.ecm.core.rest.FileService
-  * @param versionUid
-  * @return
-  */
   @Path("uid/{versionUid}")
   @GET
   public Object getRepository(@PathParam("versionUid") String versionUid) {
@@ -66,31 +58,9 @@ public class Main extends ModuleRoot {
 		DocumentObject webDoc = DocumentFactory.newDocumentRoot(ctx, doc.getRef());
 		
 		if(doc.isDownloadable()) {
-			String xpath = "file:content";
-			Property propertyFile = doc.getProperty(xpath);
-			
-			if(propertyFile != null) {
-
-	            Blob blob = (Blob) propertyFile.getValue();
-	            if (blob == null) {
-	                throw new WebResourceNotFoundException("No attached file at " + xpath);
-	            }
-	            String fileName = blob.getFilename();
-	            if (fileName == null) {
-	            	propertyFile = propertyFile.getParent();
-	                if (propertyFile.isComplex()) { // special handling for file and files schema
-	                    try {
-	                        fileName = (String) propertyFile.getValue("filename");
-	                    } catch (PropertyException e) {
-	                        fileName = "Unknown";
-	                    }
-	                }
-	            }
-	            return Response.ok(blob)
-	                    .header("Content-Disposition", "inline; filename=" + fileName)
-	                    .type(blob.getMimeType())
-	                    .build();
-			}
+			Property propertyFile = doc.getProperty("file:content");
+			if(propertyFile != null) 
+				return this.downloadFile(propertyFile);
 		}
 		// this returns directly to the view skin/views/Document/index.ftl !
 		return 	webDoc;
@@ -103,5 +73,33 @@ public class Main extends ModuleRoot {
 	
   }
   
+  /**
+ * @see org.nuxeo.ecm.core.rest.FileService
+ */
+protected Object downloadFile(Property propertyFile) throws  PropertyException {
+
+          Blob blob = (Blob) propertyFile.getValue();
+          if (blob == null) {
+              throw new WebResourceNotFoundException("No attached file at " + "file:content");
+          }
+          String fileName = blob.getFilename();
+          if (fileName == null) {
+          	propertyFile = propertyFile.getParent();
+              if (propertyFile.isComplex()) { // special handling for file and files schema
+                  try {
+                      fileName = (String) propertyFile.getValue("filename");
+                  } catch (PropertyException e) {
+                      fileName = "Unknown";
+                  }
+              }
+          }
+          return Response.ok(blob)
+                  .header("Content-Disposition", "inline; filename=" + fileName)
+                  .type(blob.getMimeType())
+                  .build();
+  }
+  
 }
+
+
 
