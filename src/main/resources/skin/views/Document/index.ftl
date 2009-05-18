@@ -39,6 +39,17 @@
     </ul>
     </div>
   </#if>
+  
+  
+  <#if Document.facets?seq_contains("Downloadable")>
+  <#assign file = Document["file:content"]/>
+  <#if file.filename>
+  <div id="mainContentBox">
+    Attachment: <a href="${This.path}/@file?property=file:content">${file.filename}</a>
+  </div>
+  </#if>
+  </#if>
+
 
 </@block>
 </@extends>
