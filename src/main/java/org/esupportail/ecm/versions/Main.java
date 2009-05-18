@@ -1,5 +1,7 @@
 package org.esupportail.ecm.versions;
 
+import java.security.Principal;
+
 import javax.ws.rs.*;
 import javax.ws.rs.core.*;
 
@@ -11,13 +13,16 @@ import org.nuxeo.ecm.core.api.CoreSession;
 import org.nuxeo.ecm.core.api.DocumentModel;
 import org.nuxeo.ecm.core.api.DocumentModelList;
 import org.nuxeo.ecm.core.api.DocumentRef;
+import org.nuxeo.ecm.core.api.DocumentSecurityException;
 import org.nuxeo.ecm.core.api.IdRef;
+import org.nuxeo.ecm.core.api.NuxeoPrincipal;
 import org.nuxeo.ecm.core.api.model.Property;
 import org.nuxeo.ecm.core.api.model.PropertyException;
 import org.nuxeo.ecm.core.rest.*;
 import org.nuxeo.ecm.webengine.model.*;
 import org.nuxeo.ecm.webengine.model.impl.*;
 import org.nuxeo.ecm.webengine.model.exceptions.*;
+import org.nuxeo.ecm.webengine.servlet.WebConst;
 
 
 
@@ -39,11 +44,13 @@ public class Main extends ModuleRoot {
   @GET
   public Object getRepository(@PathParam("versionUid") String versionUid) {
 	
+	  String errorMessage = "";
+	  
 	//final DocumentRef docRef = new IdRef(versionUid);
 	 DocumentRef docRef = new IdRef(versionUid);
-	
+	 CoreSession session = ctx.getCoreSession();		
+	 
 	try {
-		CoreSession session = ctx.getCoreSession();		
 		DocumentModelList proxies = session.getProxies(docRef, null);
 		
 		DocumentModel doc = null;
@@ -66,10 +73,18 @@ public class Main extends ModuleRoot {
 		return 	webDoc;
 		
 		
-	} catch(ClientException ce) {
+	} catch(DocumentSecurityException se) {
+		NuxeoPrincipal user = (NuxeoPrincipal)session.getPrincipal();
+		if(user.isAnonymous())
+			return Response.status(WebConst.SC_UNAUTHORIZED).entity(getTemplate("error/error_401.ftl")).build();
+		else
+			errorMessage = se.getMessage();
+  	} catch(ClientException ce) {
 		log.error("Version document can't be viewed", ce);
-		return getView("index").arg("versionUid", versionUid).arg("error", "Version document can't be accessed : " + ce.getMessage());
-	}
+		errorMessage = ce.getMessage(); 
+  	} 
+	
+  	return getView("index").arg("versionUid", versionUid).arg("error", "Version document can't be accessed : " + errorMessage);
 	
   }
   
