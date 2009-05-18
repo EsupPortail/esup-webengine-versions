@@ -10,7 +10,9 @@ import org.nuxeo.ecm.core.api.Blob;
 import org.nuxeo.ecm.core.api.ClientException;
 import org.nuxeo.ecm.core.api.CoreSession;
 import org.nuxeo.ecm.core.api.DocumentModel;
+import org.nuxeo.ecm.core.api.DocumentModelList;
 import org.nuxeo.ecm.core.api.DocumentRef;
+import org.nuxeo.ecm.core.api.DocumentResolver;
 import org.nuxeo.ecm.core.api.IdRef;
 import org.nuxeo.ecm.core.api.model.Property;
 import org.nuxeo.ecm.core.api.model.PropertyException;
@@ -37,6 +39,10 @@ public class Main extends ModuleRoot {
     return getView("index");
   }
 
+  /** For download part, see org.nuxeo.ecm.core.rest.FileService
+  * @param versionUid
+  * @return
+  */
   @Path("uid/{versionUid}")
   @GET
   public Object getRepository(@PathParam("versionUid") String versionUid) {
@@ -45,11 +51,19 @@ public class Main extends ModuleRoot {
 	 DocumentRef docRef = new IdRef(versionUid);
 	
 	try {
-		// this 2 lines allows only to verify that we can access to this document 
-		CoreSession session = ctx.getCoreSession();
-		DocumentModel doc = session.getDocument(docRef);
+		CoreSession session = ctx.getCoreSession();		
+		DocumentModelList proxies = session.getProxies(docRef, null);
 		
-		DocumentObject webDoc = DocumentFactory.newDocumentRoot(ctx, docRef);
+		DocumentModel doc = null;
+		// if we can read a proxy, we just simply take the first one (all have the same content [versions])
+		if(proxies.size() > 0)
+			doc = proxies.get(0);
+		// if no proxy give us the access, we try the version doc itself (in workspace)
+		else
+			doc = session.getDocument(docRef);
+
+		
+		DocumentObject webDoc = DocumentFactory.newDocumentRoot(ctx, doc.getRef());
 		
 		if(doc.isDownloadable()) {
 			String xpath = "file:content";
