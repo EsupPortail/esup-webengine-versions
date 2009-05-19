@@ -1,12 +1,21 @@
 package org.esupportail.ecm.versions;
 
-import java.security.Principal;
+
+
+import java.io.FilenameFilter;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.io.FileOutputStream;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Vector;
 
 import javax.ws.rs.*;
 import javax.ws.rs.core.*;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.nuxeo.common.utils.FileUtils;
 import org.nuxeo.ecm.core.api.Blob;
 import org.nuxeo.ecm.core.api.ClientException;
 import org.nuxeo.ecm.core.api.CoreSession;
@@ -16,6 +25,7 @@ import org.nuxeo.ecm.core.api.DocumentRef;
 import org.nuxeo.ecm.core.api.DocumentSecurityException;
 import org.nuxeo.ecm.core.api.IdRef;
 import org.nuxeo.ecm.core.api.NuxeoPrincipal;
+import org.nuxeo.ecm.core.api.impl.blob.FileBlob;
 import org.nuxeo.ecm.core.api.model.Property;
 import org.nuxeo.ecm.core.api.model.PropertyException;
 import org.nuxeo.ecm.core.rest.*;
@@ -23,6 +33,8 @@ import org.nuxeo.ecm.webengine.model.*;
 import org.nuxeo.ecm.webengine.model.impl.*;
 import org.nuxeo.ecm.webengine.model.exceptions.*;
 import org.nuxeo.ecm.webengine.servlet.WebConst;
+
+import de.schlichtherle.io.File;
 
 
 
@@ -66,8 +78,67 @@ public class Main extends ModuleRoot {
 		
 		if(doc.isDownloadable()) {
 			Property propertyFile = doc.getProperty("file:content");
-			if(propertyFile != null) 
-				return this.downloadFile(propertyFile);
+			if(propertyFile != null)  {
+				
+		          Blob blob = (Blob) propertyFile.getValue();
+		          if (blob == null) {
+		              throw new WebResourceNotFoundException("No attached file at " + "file:content");
+		          }
+		          String fileName = blob.getFilename();
+		          if (fileName == null) {
+		          	propertyFile = propertyFile.getParent();
+		              if (propertyFile.isComplex()) { // special handling for file and files schema
+		                  try {
+		                      fileName = (String) propertyFile.getValue("filename");
+		                  } catch (PropertyException e) {
+		                      fileName = "Unknown";
+		                  }
+		              }
+		          }
+		          
+		          if(fileName.endsWith(".zip")) {
+		        	  try {
+		        		  
+		        		  String tempdir = System.getProperty("java.io.tmpdir");
+		        		  java.io.File zipFile = new java.io.File(tempdir, "nuxeo-esup-webengine-" + versionUid + ".zip");
+		        		  java.io.File zipDirectory = new java.io.File(tempdir, "nuxeo-esup-webengine-" + versionUid);
+		        		  
+		        		  InputStream inputStream = blob.getStream();
+		        		  OutputStream out=new FileOutputStream(zipFile);
+		        		  byte buf[]=new byte[1024];
+		        		  int len;
+		        		  while((len=inputStream.read(buf))>0)
+		        		    out.write(buf,0,len);
+		        		  out.close();
+		        		  inputStream.close();
+		        		    
+		        		  File trueZipFile  = new File(zipFile);
+		        		  trueZipFile.copyAllTo(zipDirectory);
+		        		  
+		        		  List<String> files = Arrays.asList(zipDirectory.list());
+		        		  if(files.contains("index.html")) {
+		        			  FilenameFilter filterNameIndex = new FilenameFilter() {
+		        			        public boolean accept(java.io.File dir, String name) {
+		        			            return name.equals("index.html");
+		        			        }
+		        			    };
+
+		        			  blob = new FileBlob(zipDirectory.listFiles(filterNameIndex)[0]);
+		        			  fileName = "index.html";
+		        		  }
+		        				  
+		        	  } catch(Exception ie) {
+		        		  log.error("problem unziping zip file from document version :" + versionUid  ,ie);
+		        	  }
+		          }
+		          
+		          
+		          return Response.ok(blob)
+		                  .header("Content-Disposition", "inline; filename=" + fileName)
+		                  .type(blob.getMimeType())
+		                  .build();
+			}
+				
 		}
 		// this returns directly to the view skin/views/Document/index.ftl !
 		return 	webDoc;
@@ -87,33 +158,7 @@ public class Main extends ModuleRoot {
   	return getView("index").arg("versionUid", versionUid).arg("error", "Version document can't be accessed : " + errorMessage);
 	
   }
-  
-  /**
- * @see org.nuxeo.ecm.core.rest.FileService
- */
-protected Object downloadFile(Property propertyFile) throws  PropertyException {
 
-          Blob blob = (Blob) propertyFile.getValue();
-          if (blob == null) {
-              throw new WebResourceNotFoundException("No attached file at " + "file:content");
-          }
-          String fileName = blob.getFilename();
-          if (fileName == null) {
-          	propertyFile = propertyFile.getParent();
-              if (propertyFile.isComplex()) { // special handling for file and files schema
-                  try {
-                      fileName = (String) propertyFile.getValue("filename");
-                  } catch (PropertyException e) {
-                      fileName = "Unknown";
-                  }
-              }
-          }
-          return Response.ok(blob)
-                  .header("Content-Disposition", "inline; filename=" + fileName)
-                  .type(blob.getMimeType())
-                  .build();
-  }
-  
 }
 
 
