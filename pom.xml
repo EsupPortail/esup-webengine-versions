@@ -1,181 +1,156 @@
 <?xml version="1.0"?>
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
-	<modelVersion>4.0.0</modelVersion>
+	 xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+  <modelVersion>4.0.0</modelVersion>
 
-	<groupId>org.esup.ecm</groupId>
-	<artifactId>esup-webengine-versions</artifactId>
-	<name>esup-webengine-versions project</name>
-	<description>esup-webengine-versions project description</description>
-	<version>1.0-SNAPSHOT</version>
+  <groupId>org.esup.ecm</groupId>
+  <artifactId>esup-webengine-versions</artifactId>
+  <name>esup-webengine-versions project</name>
+  <description>esup-webengine-versions project description</description>
+  <version>1.0-SNAPSHOT</version>
 
-	<properties>
-		<nuxeo.version>5.2.0-RC1</nuxeo.version>
-		<nuxeo.core.version>1.5.0-RC1</nuxeo.core.version>
-	</properties>
-
-
-	<build>
-		<plugins>
-			<plugin>
-				<groupId>org.apache.maven.plugins</groupId>
-				<artifactId>maven-compiler-plugin</artifactId>
-				<configuration>
-					<source>1.5</source>
-					<target>1.5</target>
-				</configuration>
-			</plugin>
-			<plugin>
-				<groupId>org.apache.maven.plugins</groupId>
-				<artifactId>maven-source-plugin</artifactId>
-				<version>2.0.2</version>
-				<executions>
-					<execution>
-						<id>attach-sources</id>
-						<goals>
-							<goal>jar</goal>
-						</goals>
-					</execution>
-				</executions>
-			</plugin>
-			<plugin>
-				<groupId>org.apache.maven.plugins</groupId>
-				<artifactId>maven-jar-plugin</artifactId>
-				<version>2.2</version>
-				<configuration>
-					<archive>
-						<manifestFile>
-							src/main/resources/META-INF/MANIFEST.MF
-            </manifestFile>
-					</archive>
-				</configuration>
-			</plugin>
+  <parent>
+    <groupId>org.nuxeo.ecm.webengine</groupId>
+    <artifactId>nuxeo-webengine-parent</artifactId>
+    <version>5.2.0-RC1</version>
+  </parent>
 
 
-			<!-- add trueZip dependancies      -->
-			<plugin>
-				<groupId>org.apache.maven.plugins</groupId>
-				<artifactId>maven-dependency-plugin</artifactId>
-				<executions>
-
-					<execution>
-						<id>copy-installed</id>
-						<phase>process-resources</phase>
-						<goals>
-							<goal>copy</goal>
-						</goals>
-						<configuration>
-							<artifactItems>
-
-								<artifactItem>
-									<groupId>truezip</groupId>
-									<artifactId>truezip</artifactId>
-									<version>6.6</version>
-								</artifactItem>
-
-							</artifactItems>
-
-							<outputDirectory>${project.build.outputDirectory}/lib</outputDirectory>
-
-						</configuration>
-					</execution>
-
-				</executions>
-			</plugin>
-
-		</plugins>
-		<pluginManagement>
-			<plugins>
-				<plugin>
-					<groupId>org.apache.maven.plugins</groupId>
-					<artifactId>maven-ejb-plugin</artifactId>
-					<version>2.1</version>
-					<configuration>
-						<ejbVersion>3.0</ejbVersion>
-						<archive>
-							<manifestFile>
-								src/main/resources/META-INF/MANIFEST.MF
-              </manifestFile>
-						</archive>
-					</configuration>
-				</plugin>
-			</plugins>
-		</pluginManagement>
-	</build>
+  <build>
+    <plugins>
+      <plugin>
+	<groupId>org.apache.maven.plugins</groupId>
+	<artifactId>maven-compiler-plugin</artifactId>
+	<configuration>
+	  <source>1.5</source>
+	  <target>1.5</target>
+	</configuration>
+      </plugin>
+      <plugin>
+	<groupId>org.apache.maven.plugins</groupId>
+	<artifactId>maven-source-plugin</artifactId>
+	<version>2.0.2</version>
+	<executions>
+	  <execution>
+	    <id>attach-sources</id>
+	    <goals>
+	      <goal>jar</goal>
+	    </goals>
+	  </execution>
+	</executions>
+      </plugin>
+      <plugin>
+	<groupId>org.apache.maven.plugins</groupId>
+	<artifactId>maven-jar-plugin</artifactId>
+	<version>2.2</version>
+	<configuration>
+	  <archive>
+	    <manifestFile>
+	      src/main/resources/META-INF/MANIFEST.MF
+	    </manifestFile>
+	  </archive>
+	</configuration>
+      </plugin>
 
 
-	<repositories>
-		<repository>
-			<id>public</id>
-			<url>http://maven.nuxeo.org/public</url>
-			<snapshots>
-				<enabled>false</enabled>
-			</snapshots>
-			<releases>
-				<enabled>true</enabled>
-			</releases>
-		</repository>
-	</repositories>
+      <!-- add trueZip dependancies      -->
+      <plugin>
+	<groupId>org.apache.maven.plugins</groupId>
+	<artifactId>maven-dependency-plugin</artifactId>
+	<executions>
+
+	  <execution>
+	    <id>copy-installed</id>
+	    <phase>process-resources</phase>
+	    <goals>
+	      <goal>copy</goal>
+	    </goals>
+	    <configuration>
+	      <artifactItems>
+
+		<artifactItem>
+		  <groupId>truezip</groupId>
+		  <artifactId>truezip</artifactId>
+		  <version>6.6</version>
+		</artifactItem>
+
+	      </artifactItems>
+
+	      <outputDirectory>${project.build.outputDirectory}/lib</outputDirectory>
+
+	    </configuration>
+	  </execution>
+
+	</executions>
+      </plugin>
+
+    </plugins>
+
+  </build>
 
 
-	<dependencies>
-		<dependency>
-			<groupId>org.resteasy</groupId>
-			<artifactId>jaxrs-api</artifactId>
-			<version>1.0-beta-8</version>
-		</dependency>
-		<dependency>
-			<groupId>org.nuxeo.ecm.core</groupId>
-			<artifactId>nuxeo-core-event-compat</artifactId>
-			<version>${nuxeo.core.version}</version>
-		</dependency>
-		<dependency>
-			<groupId>org.nuxeo.ecm.core</groupId>
-			<artifactId>nuxeo-core-api</artifactId>
-			<version>${nuxeo.core.version}</version>
-		</dependency>
-		<dependency>
-			<groupId>org.nuxeo.ecm.platform</groupId>
-			<artifactId>nuxeo-platform-webapp-core</artifactId>
-			<version>${nuxeo.version}</version>
-			<type>ejb</type>
-		</dependency>
-		<dependency>
-			<groupId>org.nuxeo.ecm.platform</groupId>
-			<artifactId>nuxeo-platform-relations-api</artifactId>
-			<version>${nuxeo.version}</version>
-		</dependency>
-		<dependency>
-			<groupId>org.nuxeo.ecm.webengine</groupId>
-			<artifactId>nuxeo-webengine-core</artifactId>
-			<version>${nuxeo.version}</version>
-		</dependency>
-		<dependency>
-			<groupId>org.nuxeo.ecm.webengine</groupId>
-			<artifactId>nuxeo-webengine-base</artifactId>
-			<version>${nuxeo.version}</version>
-		</dependency>
-		<dependency>
-			<groupId>org.wikimodel</groupId>
-			<artifactId>wem</artifactId>
-			<version>2.0.2</version>
-		</dependency>
-
-		<!-- test scope -->
-		<dependency>
-			<groupId>org.nuxeo.ecm.core</groupId>
-			<artifactId>nuxeo-core-jcr-connector-test</artifactId>
-			<version>${nuxeo.core.version}</version>
-		</dependency>
-
-		<dependency>
-			<groupId>truezip</groupId>
-			<artifactId>truezip</artifactId>
-			<version>6.6</version>
-		</dependency>
+  <repositories>
+    <repository>
+      <id>public</id>
+      <url>http://maven.nuxeo.org/public</url>
+      <snapshots>
+	<enabled>false</enabled>
+      </snapshots>
+      <releases>
+	<enabled>true</enabled>
+      </releases>
+    </repository>
+  </repositories>
 
 
-	</dependencies>
+  <dependencies>
+
+    <dependency>
+      <groupId>org.jboss.resteasy</groupId>
+      <artifactId>jaxrs-api</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.nuxeo.ecm.core</groupId>
+      <artifactId>nuxeo-core-api</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.nuxeo.ecm.platform</groupId>
+      <artifactId>nuxeo-platform-webapp-core</artifactId>
+      <type>ejb</type>
+    </dependency>
+    <dependency>
+      <groupId>org.nuxeo.ecm.platform</groupId>
+      <artifactId>nuxeo-platform-relations-api</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.nuxeo.ecm.webengine</groupId>
+      <artifactId>nuxeo-webengine-core</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.nuxeo.ecm.webengine</groupId>
+      <artifactId>nuxeo-webengine-base</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.wikimodel</groupId>
+      <artifactId>wem</artifactId>
+    </dependency>
+
+    <!-- test scope -->
+    <dependency>
+      <groupId>org.nuxeo.ecm.core</groupId>
+      <artifactId>nuxeo-core-jcr-connector-test</artifactId>
+    </dependency>
+
+
+
+    <dependency>
+      <groupId>truezip</groupId>
+      <artifactId>truezip</artifactId>
+      <version>6.6</version>
+    </dependency>
+
+
+  </dependencies>
 
 
 </project>

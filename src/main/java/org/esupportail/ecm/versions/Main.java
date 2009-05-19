@@ -115,17 +115,7 @@ public class Main extends ModuleRoot {
 		        		  File trueZipFile  = new File(zipFile);
 		        		  trueZipFile.copyAllTo(zipDirectory);
 		        		  
-		        		  List<String> files = Arrays.asList(zipDirectory.list());
-		        		  if(files.contains("index.html")) {
-		        			  FilenameFilter filterNameIndex = new FilenameFilter() {
-		        			        public boolean accept(java.io.File dir, String name) {
-		        			            return name.equals("index.html");
-		        			        }
-		        			    };
-
-		        			  blob = new FileBlob(zipDirectory.listFiles(filterNameIndex)[0]);
-		        			  fileName = "index.html";
-		        		  }
+		        		  return new WebSiteObject(trueZipFile);
 		        				  
 		        	  } catch(Exception ie) {
 		        		  log.error("problem unziping zip file from document version :" + versionUid  ,ie);
@@ -158,6 +148,11 @@ public class Main extends ModuleRoot {
   	return getView("index").arg("versionUid", versionUid).arg("error", "Version document can't be accessed : " + errorMessage);
 	
   }
+  
+  
+  
+  
+  
 
 }
 
