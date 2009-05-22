@@ -51,7 +51,11 @@ public class Main extends ModuleRoot {
 	 */
 	@GET
 	public Object doGet() {
-		return requestedObject;
+		if(requestedObject==null)
+			return getView("index");
+		else
+			return requestedObject;
+		
 	}
 
 	protected void resolve(String versionUid) throws ClientException {
@@ -97,6 +101,11 @@ public class Main extends ModuleRoot {
 						}
 					}
 				}
+				
+				requestedObject = Response.ok(requestedBlob).header(
+						"Content-Disposition",
+						"inline; filename=" + requestedFilename).type(
+						requestedBlob.getMimeType()).build();
 
 				if (requestedFilename.endsWith(".zip")) {
 					try {
@@ -123,7 +132,9 @@ public class Main extends ModuleRoot {
 							
 						List<String> files = Arrays.asList(zipDirectory.list());
 						if (files.contains("index.html")) {
-							requestedObject = redirect(ctx.getUrlPath() + "/index.html");
+							String ctxUrlPath = ctx.getUrlPath();
+							String indexUrl = ctxUrlPath.endsWith("/") ?  ctxUrlPath + "index.html" : ctxUrlPath +"/index.html";
+							requestedObject = redirect(indexUrl);
 						}
 
 					} catch (Exception ie) {
@@ -132,11 +143,6 @@ public class Main extends ModuleRoot {
 										+ versionUid, ie);
 					}
 				} 
-				
-				requestedObject = Response.ok(requestedBlob).header(
-						"Content-Disposition",
-						"inline; filename=" + requestedFilename).type(
-						requestedBlob.getMimeType()).build();
 			
 			}
 
