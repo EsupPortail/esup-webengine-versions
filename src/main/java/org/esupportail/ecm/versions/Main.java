@@ -1,7 +1,5 @@
 package org.esupportail.ecm.versions;
 
-
-
 import java.io.FilenameFilter;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -25,6 +23,7 @@ import org.nuxeo.ecm.core.api.DocumentRef;
 import org.nuxeo.ecm.core.api.DocumentSecurityException;
 import org.nuxeo.ecm.core.api.IdRef;
 import org.nuxeo.ecm.core.api.NuxeoPrincipal;
+import org.nuxeo.ecm.core.api.PathRef;
 import org.nuxeo.ecm.core.api.impl.blob.FileBlob;
 import org.nuxeo.ecm.core.api.model.Property;
 import org.nuxeo.ecm.core.api.model.PropertyException;
@@ -36,125 +35,182 @@ import org.nuxeo.ecm.webengine.servlet.WebConst;
 
 import de.schlichtherle.io.File;
 
-
-
-@WebObject(type="esupversions")
-@Produces("text/html; charset=UTF-8")
+@WebObject(type = "esupversions")
 public class Main extends ModuleRoot {
 
-  private static final Log log = LogFactory.getLog(Main.class);
-	
-  /**
-   * Default view
-   */
-  @GET
-  public Object doGet() {
-    return getView("index");
-  }
+	private static final Log log = LogFactory.getLog(Main.class);
 
-  @Path("uid/{versionUid}")
-  @GET
-  public Object getRepository(@PathParam("versionUid") String versionUid) {
-	
-	  String errorMessage = "";
-	  
-	//final DocumentRef docRef = new IdRef(versionUid);
-	 DocumentRef docRef = new IdRef(versionUid);
-	 CoreSession session = ctx.getCoreSession();		
-	 
-	try {
+	protected java.io.File zipDirectory;
+
+	protected boolean isRoot = true;
+
+	protected Object requestedObject;
+
+	/**
+	 * Default view
+	 */
+	@GET
+	public Object doGet() {
+		return requestedObject;
+	}
+
+	protected void resolve(String versionUid) throws ClientException {
+
+		// final DocumentRef docRef = new IdRef(versionUid);
+		DocumentRef docRef = new IdRef(versionUid);
+		CoreSession session = ctx.getCoreSession();
+
+		Blob requestedBlob;
+		String requestedFilename;
+
 		DocumentModelList proxies = session.getProxies(docRef, null);
-		
+
 		DocumentModel doc = null;
-		// if we can read a proxy, we just simply take the first one (all have the same content [versions])
-		if(proxies.size() > 0)
+		// if we can read a proxy, we just simply take the first one (all have
+		// the same content [versions])
+		if (proxies.size() > 0)
 			doc = proxies.get(0);
-		// if no proxy give us the access, we try the version doc itself (in workspace)
+		// if no proxy give us the access, we try the version doc itself (in
+		// workspace)
 		else
 			doc = session.getDocument(docRef);
 
-		
-		DocumentObject webDoc = DocumentFactory.newDocumentRoot(ctx, doc.getRef());
-		
-		if(doc.isDownloadable()) {
+		if (doc.isDownloadable()) {
 			Property propertyFile = doc.getProperty("file:content");
-			if(propertyFile != null)  {
+			if (propertyFile != null) {
+
+				requestedBlob = (Blob) propertyFile.getValue();
+				if (requestedBlob == null) {
+					throw new WebResourceNotFoundException(
+							"No attached file at " + "file:content");
+				}
+				requestedFilename = requestedBlob.getFilename();
+				if (requestedFilename == null) {
+					propertyFile = propertyFile.getParent();
+					if (propertyFile.isComplex()) { // special handling for file
+													// and files schema
+						try {
+							requestedFilename = (String) propertyFile
+									.getValue("filename");
+						} catch (PropertyException e) {
+							requestedFilename = "Unknown";
+						}
+					}
+				}
+
+				if (requestedFilename.endsWith(".zip")) {
+					try {
+
+						String tempdir = System.getProperty("java.io.tmpdir");
+						java.io.File zipFile = new java.io.File(tempdir,
+								"nuxeo-esup-webengine-" + versionUid + ".zip");
+						zipDirectory = new java.io.File(tempdir,
+								"nuxeo-esup-webengine-" + versionUid);
+						
+						if(!zipDirectory.exists()) {					
+							InputStream inputStream = requestedBlob.getStream();
+							OutputStream out = new FileOutputStream(zipFile);
+							byte buf[] = new byte[1024];
+							int len;
+							while ((len = inputStream.read(buf)) > 0)
+								out.write(buf, 0, len);
+							out.close();
+							inputStream.close();
+
+							File trueZipFile = new File(zipFile);
+							trueZipFile.copyAllTo(zipDirectory);
+						}
+							
+						List<String> files = Arrays.asList(zipDirectory.list());
+						if (files.contains("index.html")) {
+							requestedObject = redirect(ctx.getUrlPath() + "/index.html");
+						}
+
+					} catch (Exception ie) {
+						log.error(
+								"problem unziping zip file from document version :"
+										+ versionUid, ie);
+					}
+				} 
 				
-		          Blob blob = (Blob) propertyFile.getValue();
-		          if (blob == null) {
-		              throw new WebResourceNotFoundException("No attached file at " + "file:content");
-		          }
-		          String fileName = blob.getFilename();
-		          if (fileName == null) {
-		          	propertyFile = propertyFile.getParent();
-		              if (propertyFile.isComplex()) { // special handling for file and files schema
-		                  try {
-		                      fileName = (String) propertyFile.getValue("filename");
-		                  } catch (PropertyException e) {
-		                      fileName = "Unknown";
-		                  }
-		              }
-		          }
-		          
-		          if(fileName.endsWith(".zip")) {
-		        	  try {
-		        		  
-		        		  String tempdir = System.getProperty("java.io.tmpdir");
-		        		  java.io.File zipFile = new java.io.File(tempdir, "nuxeo-esup-webengine-" + versionUid + ".zip");
-		        		  java.io.File zipDirectory = new java.io.File(tempdir, "nuxeo-esup-webengine-" + versionUid);
-		        		  
-		        		  InputStream inputStream = blob.getStream();
-		        		  OutputStream out=new FileOutputStream(zipFile);
-		        		  byte buf[]=new byte[1024];
-		        		  int len;
-		        		  while((len=inputStream.read(buf))>0)
-		        		    out.write(buf,0,len);
-		        		  out.close();
-		        		  inputStream.close();
-		        		    
-		        		  File trueZipFile  = new File(zipFile);
-		        		  trueZipFile.copyAllTo(zipDirectory);
-		        		  
-		        		  return new WebSiteObject(trueZipFile);
-		        				  
-		        	  } catch(Exception ie) {
-		        		  log.error("problem unziping zip file from document version :" + versionUid  ,ie);
-		        	  }
-		          }
-		          
-		          
-		          return Response.ok(blob)
-		                  .header("Content-Disposition", "inline; filename=" + fileName)
-		                  .type(blob.getMimeType())
-		                  .build();
+				requestedObject = Response.ok(requestedBlob).header(
+						"Content-Disposition",
+						"inline; filename=" + requestedFilename).type(
+						requestedBlob.getMimeType()).build();
+			
 			}
-				
+
 		}
-		// this returns directly to the view skin/views/Document/index.ftl !
-		return 	webDoc;
-		
-		
-	} catch(DocumentSecurityException se) {
-		NuxeoPrincipal user = (NuxeoPrincipal)session.getPrincipal();
-		if(user.isAnonymous())
-			return Response.status(WebConst.SC_UNAUTHORIZED).entity(getTemplate("error/error_401.ftl")).build();
-		else
-			errorMessage = se.getMessage();
-  	} catch(ClientException ce) {
-		log.error("Version document can't be viewed", ce);
-		errorMessage = ce.getMessage(); 
-  	} 
-	
-  	return getView("index").arg("versionUid", versionUid).arg("error", "Version document can't be accessed : " + errorMessage);
-	
-  }
-  
-  
-  
-  
-  
+
+	}
+
+	@Path(value = "{path}")
+	public Object traverse(@PathParam("path") String path) {
+
+		CoreSession session = ctx.getCoreSession();
+		String errorMessage = "";
+
+		if (isRoot == true) {
+			isRoot = false;
+			String versionUid = path;
+			try {
+				resolve(versionUid);
+				return this;
+			} catch (DocumentSecurityException se) {
+				NuxeoPrincipal user = (NuxeoPrincipal) session.getPrincipal();
+				if (user.isAnonymous()) {
+					requestedObject = Response.status(WebConst.SC_UNAUTHORIZED)
+							.entity(getTemplate("error/error_401.ftl")).build();
+					return this;
+				}
+				else
+					errorMessage = se.getMessage();
+			} catch (ClientException ce) {
+				log.error("Version document can't be viewed", ce);
+				errorMessage = ce.getMessage();
+			}
+			requestedObject = getView("index").arg("versionUid", path).arg(
+					"error",
+					"Version document can't be accessed : " + errorMessage);
+		} else {
+
+			if (zipDirectory != null) {
+
+				final String filePath = path;
+
+				List<String> files = Arrays.asList(zipDirectory.list());
+				if (files.contains(filePath)) {
+					FilenameFilter filterNameIndex = new FilenameFilter() {
+						public boolean accept(java.io.File dir, String name) {
+							return name.equals(filePath);
+						}
+					};
+
+					java.io.File requestedFile = zipDirectory
+							.listFiles(filterNameIndex)[0];
+
+					Blob requestedBlob;
+					String requestedFilename;
+
+					if (requestedFile.isDirectory())
+						zipDirectory = requestedFile;
+					else {
+						requestedBlob = new FileBlob(requestedFile);
+						requestedFilename = filePath;
+
+						requestedObject = Response.ok(requestedBlob).header(
+								"Content-Disposition",
+								"inline; filename=" + requestedFilename).type(
+								requestedBlob.getMimeType()).build();
+					}
+				}
+
+			}
+		}
+
+		return this;
+
+	}
+
 
 }
-
-
-
