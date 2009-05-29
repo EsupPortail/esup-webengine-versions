@@ -1,9 +1,9 @@
 <?xml version="1.0"?>
-<project name="${artifactId}" default="deploy" basedir=".">
+<project name="esup-webengine-versions" default="deploy" basedir=".">
 
   <!-- From the pom.xml -->
-  <property name="name" value="${artifactId}" />
-  <property name="version" value="${version}" />
+  <property name="name" value="esup-webengine-versions" />
+  <property name="version" value="1.0-SNAPSHOT" />
 
   <!-- Create a build.properties file from build.properties.sample
        if you wish to override the JBoss paths -->
