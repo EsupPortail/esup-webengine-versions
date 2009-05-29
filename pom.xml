@@ -10,9 +10,9 @@
   <version>1.0-SNAPSHOT</version>
 
   <parent>
-    <groupId>org.nuxeo.ecm.webengine</groupId>
-    <artifactId>nuxeo-webengine-parent</artifactId>
-    <version>5.2.0-RC1</version>
+    <groupId>org.nuxeo.ecm.platform</groupId>
+    <artifactId>nuxeo-features-parent</artifactId>
+    <version>5.2.0</version>
   </parent>
 
 
@@ -88,21 +88,6 @@
 
   </build>
 
-
-  <repositories>
-    <repository>
-      <id>public</id>
-      <url>http://maven.nuxeo.org/public</url>
-      <snapshots>
-	<enabled>false</enabled>
-      </snapshots>
-      <releases>
-	<enabled>true</enabled>
-      </releases>
-    </repository>
-  </repositories>
-
-
   <dependencies>
 
     <dependency>
@@ -115,11 +100,6 @@
     </dependency>
     <dependency>
       <groupId>org.nuxeo.ecm.platform</groupId>
-      <artifactId>nuxeo-platform-webapp-core</artifactId>
-      <type>ejb</type>
-    </dependency>
-    <dependency>
-      <groupId>org.nuxeo.ecm.platform</groupId>
       <artifactId>nuxeo-platform-relations-api</artifactId>
     </dependency>
     <dependency>
@@ -129,10 +109,6 @@
     <dependency>
       <groupId>org.nuxeo.ecm.webengine</groupId>
       <artifactId>nuxeo-webengine-base</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>org.wikimodel</groupId>
-      <artifactId>wem</artifactId>
     </dependency>
 
     <!-- test scope -->
