@@ -165,9 +165,10 @@ public class Main extends ModuleRoot {
 			} catch (DocumentSecurityException se) {
 				NuxeoPrincipal user = (NuxeoPrincipal) session.getPrincipal();
 				if (user.isAnonymous()) {
-					requestedObject = Response.status(WebConst.SC_UNAUTHORIZED)
-							.entity(getTemplate("error/error_401.ftl")).build();
-					return this;
+				    //requestedObject = Response.status(WebConst.SC_UNAUTHORIZED)
+				    //.entity(getTemplate("error/error_401.ftl")).build();
+				    requestedObject = redirect("/nuxeo/logout");
+				    return this;
 				}
 				else
 					errorMessage = se.getMessage();
