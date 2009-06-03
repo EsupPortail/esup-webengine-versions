@@ -16,6 +16,21 @@
   </parent>
 
 
+<repositories>
+    <repository>
+      <id>public</id>
+      <url>http://maven.nuxeo.org/public</url>
+      <snapshots>
+    <enabled>false</enabled>
+      </snapshots>
+      <releases>
+    <enabled>true</enabled>
+      </releases>
+    </repository>
+  </repositories>
+
+
+
   <build>
     <plugins>
       <plugin>
