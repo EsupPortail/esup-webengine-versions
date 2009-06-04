@@ -26,7 +26,7 @@
     <os family="windows" />
   </condition>
 
-  <target name="deploy" depends="install,copy" description="Build and copy to JBoss" />
+  <target name="deploy" depends="clean-target,install,copy" description="Build and copy to JBoss" />
 
   <target name="install" depends="install-unix,install-windows" description="Build" />
   <target name="install-unix" if="osfamily-unix">
@@ -79,5 +79,10 @@
       <fileset dir="${basedir}/src/main/resources/nuxeo.war/" />
     </copy>
   </target>
+
+
+  <target name="clean-target" description="clean target">
+    <delete  dir="target"/>
+  </target>	
 
 </project>
