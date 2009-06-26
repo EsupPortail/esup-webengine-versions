@@ -236,6 +236,12 @@ public class Main extends ModuleRoot {
 				if (user.isAnonymous()) {
 				    //requestedObject = Response.status(WebConst.SC_UNAUTHORIZED)
 				    //.entity(getTemplate("error/error_401.ftl")).build();
+				
+					String requestPage = this.getPath().replaceFirst("/nuxeo", "") + this.getTrailingPath();
+					javax.servlet.http.HttpServletRequest httpServletRequest = ctx.getRequest();
+					javax.servlet.http.HttpSession httpSession = httpServletRequest.getSession();
+					httpSession.setAttribute("Nuxeo5_Start_Page", requestPage);
+			        
 				    requestedObject = redirect("/nuxeo/logout");
 				    return this;
 				}
