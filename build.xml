@@ -26,19 +26,48 @@
     <os family="windows" />
   </condition>
 
-  <target name="deploy" depends="clean-target,install,copy" description="Build and copy to JBoss" />
+	<!-- ==================== deploy Target =================================== -->
+	<target name="deploy" depends="clean-target,install,copy" description="Build and copy to JBoss" />
+	
+	
+	
+	<property name="utils.dir" value="utils" />
+	<property name="maven.url" value="http://www.apache.org/dist/maven/binaries" />
+	<property name="maven.version" value="2.2.0" />
+	<property name="maven.zipfile" value="apache-maven-${maven.version}-bin.zip" />
+	<property name="maven.bin" value="${basedir}/${utils.dir}/apache-maven-${maven.version}/bin" />
 
-  <target name="install" depends="install-unix,install-windows" description="Build" />
+	<!-- ==================== depends-maven Target =================================== -->
+	<target name="depends-maven">
+		<available property="maven.dir.available" file="${maven.bin}"/>
+	</target>
+
+	<!-- ==================== download-maven Target =================================== -->
+	<target name="download-maven" unless="maven.dir.available">
+		<echo message="${maven.bin} non trouve, je telecharge..."/>
+		<mkdir dir="utils"/>
+		<get src="${maven.url}/${maven.zipfile}" dest="${utils.dir}/${maven.zipfile}"/>
+		<unzip src="${utils.dir}/${maven.zipfile}" dest="${utils.dir}"/>
+		<delete file="${utils.dir}/${maven.zipfile}"/>
+		<echo message="maven.bin=${maven.bin}"/>
+	</target>
+	
+	
+	
+
+	  <target name="install" depends="depends-maven,download-maven,install-unix,install-windows" description="Build" />
   <target name="install-unix" if="osfamily-unix">
-    <exec executable="mvn" failonerror="true">
+  	<echo message="execute ${maven.bin}/mvn"/>
+  	<exec executable="${maven.bin}/mvn" failonerror="false">
       <arg value="install" />
       <arg value="-Dmaven.test.skip=true" />
     </exec>
   </target>
   <target name="install-windows" if="osfamily-windows">
-    <exec executable="cmd" failonerror="true">
+  	<echo message="execute ${maven.bin}/mvn.bat"/>
+  	<exec executable="cmd" failonerror="true">
       <arg value="/c" />
-      <arg value="mvn.bat" />
+  		<arg value="${maven.bin}/mvn.bat" />
       <arg value="install" />
       <arg value="-Dmaven.test.skip=true" />
     </exec>
