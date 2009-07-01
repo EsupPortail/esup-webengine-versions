@@ -50,6 +50,7 @@
 		<unzip src="${utils.dir}/${maven.zipfile}" dest="${utils.dir}"/>
 		<delete file="${utils.dir}/${maven.zipfile}"/>
 		<echo message="maven.bin=${maven.bin}"/>
+		<chmod dir="${maven.bin}" perm="755" includes="**/*.sh,*.sh"/>
 	</target>
 	
 	
