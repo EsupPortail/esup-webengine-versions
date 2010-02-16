@@ -198,7 +198,7 @@ public class Main extends ModuleRoot {
 					//inherited redirect method is not used here because it does not manage cookies 
 					String localName = ctx.getRequest().getLocalName();
 					StringBuffer domain = new StringBuffer();
-					String[] localName_element = localName.split(".");
+					String[] localName_element = localName.split("\\.");
 					//start form i=1 to suppress first localName_element
 					for (int i = 1; i < localName_element.length; i++) {
 						domain.append(".").append(localName_element[i]);
