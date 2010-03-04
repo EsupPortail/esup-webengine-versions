@@ -28,11 +28,13 @@ import org.nuxeo.ecm.core.api.NuxeoPrincipal;
 import org.nuxeo.ecm.core.api.impl.blob.FileBlob;
 import org.nuxeo.ecm.core.api.model.Property;
 import org.nuxeo.ecm.core.api.model.PropertyException;
+import org.nuxeo.ecm.platform.mimetype.interfaces.MimetypeRegistry;
 import org.nuxeo.ecm.platform.ui.web.auth.NXAuthConstants;
 import org.nuxeo.ecm.webengine.WebException;
 import org.nuxeo.ecm.webengine.model.*;
 import org.nuxeo.ecm.webengine.model.impl.*;
 import org.nuxeo.ecm.webengine.model.exceptions.*;
+import org.nuxeo.runtime.api.Framework;
 
 @WebObject(type = "esupversions")
 public class Main extends ModuleRoot {
@@ -85,10 +87,10 @@ public class Main extends ModuleRoot {
 					propertyFile = propertyFile.getParent();
 					log.debug("resolve :: propertyFile="+propertyFile);
 					if (propertyFile.isComplex()) { // special handling for file
-													// and files schema
+						// and files schema
 						try {
 							requestedFilename = (String) propertyFile
-									.getValue("filename");
+							.getValue("filename");
 							log.debug("resolve :: requestedFilename="+requestedFilename);
 						} catch (PropertyException e) {
 							requestedFilename = "Unknown";
@@ -98,7 +100,7 @@ public class Main extends ModuleRoot {
 				requestedObject = Response.ok(requestedBlob).header(
 						"Content-Disposition",
 						"inline; filename=" + requestedFilename).type(
-						requestedBlob.getMimeType()).build();
+								requestedBlob.getMimeType()).build();
 				if (requestedFilename.endsWith(".zip")) {
 					try {
 						String tempdir = System.getProperty("java.io.tmpdir");
@@ -137,13 +139,13 @@ public class Main extends ModuleRoot {
 					} catch (Exception ie) {
 						log.error(
 								"problem unziping zip file from document version :"
-										+ versionUid, ie);
+								+ versionUid, ie);
 					}
 				} 
 			}
 		}
 	}
-	
+
 	private Object getRequestedObjectFromFiles(String versionUid, String directoryName, File[] files) {
 		boolean indexHtml = false;
 		boolean indexHtm = false;
@@ -166,7 +168,7 @@ public class Main extends ModuleRoot {
 			return getRequestedObjectFromFileName(versionUid, directoryName, "index.htm");
 		else return null;
 	}
-	
+
 	private Object getRequestedObjectFromFileName(String versionUid, String directoryName, String fileName) {
 		String ctxUrlPath = getPath();
 		ctxUrlPath = ctxUrlPath.endsWith("/") ?  ctxUrlPath : ctxUrlPath + "/";
@@ -179,9 +181,9 @@ public class Main extends ModuleRoot {
 		log.debug("getRequestedObjectFromFileName :: indexUrl="+indexUrl);
 		return redirect(indexUrl);
 	}
-	
+
 	@Path(value = "{path}")
-	public Object traverse(@PathParam("path") String path) {
+	public Object traverse(@PathParam("path") String path) throws Exception {
 		CoreSession session = ctx.getCoreSession();
 		String errorMessage = "";
 		log.debug("traverse :: isRoot="+isRoot);
@@ -206,16 +208,16 @@ public class Main extends ModuleRoot {
 					String requestPage = this.getPath().replaceFirst("/nuxeo/", "") + this.getTrailingPath();
 					NewCookie cookieUrlToReach = new NewCookie(NXAuthConstants.SSO_INITIAL_URL_REQUEST_KEY, requestPage, "/", domain.toString(), 1, NXAuthConstants.SSO_INITIAL_URL_REQUEST_KEY, 60, false);
 
-			        ResponseBuilder responseBuilder;
+					ResponseBuilder responseBuilder;
 					String url = ctx.getServerURL().append("/nuxeo/logout").toString();
 					try {
 						responseBuilder = Response.seeOther(new URI(url));
 					} catch (URISyntaxException e) {
 						throw WebException.wrap(e);
 					}
-			        responseBuilder.cookie(cookieUrlToReach);
-				    requestedObject = responseBuilder.build();
-				    return this;
+					responseBuilder.cookie(cookieUrlToReach);
+					requestedObject = responseBuilder.build();
+					return this;
 				}
 				else
 					errorMessage = se.getMessage();
@@ -240,7 +242,7 @@ public class Main extends ModuleRoot {
 						}
 					};
 					java.io.File requestedFile = zipDirectory
-							.listFiles(filterNameIndex)[0];
+					.listFiles(filterNameIndex)[0];
 					log.debug("traverse :: requestedFile="+requestedFile);
 					Blob requestedBlob;
 					String requestedFilename;
@@ -250,16 +252,33 @@ public class Main extends ModuleRoot {
 						requestedBlob = new FileBlob(requestedFile);
 						requestedFilename = filePath;
 						log.debug("traverse :: requestedFilename="+requestedFilename);
-						
-						requestedObject = Response.ok(requestedBlob).header(
+
+						ResponseBuilder responseBuilder = Response.ok(requestedBlob);
+						responseBuilder = responseBuilder.header(
 								"Content-Disposition",
 								"inline; filename=" + requestedFilename).type(
-								requestedBlob.getMimeType()).build();
+										requestedBlob.getMimeType());
+
+						responseBuilder = responseBuilder.type(
+								getMimetype(requestedFilename, requestedBlob));
+						requestedObject = responseBuilder.build();
+
 					}
 				}
 			}
 		}
 		return this;
+	}
+
+	private String getMimetype(String fileName, Blob blog) throws Exception {
+		// mimetype detection
+		MimetypeRegistry mimeService = Framework.getService(MimetypeRegistry.class);
+		String detectedMimeType = mimeService.getMimetypeFromFilenameAndBlobWithDefault(
+				fileName, blog, null);
+		if (detectedMimeType == null) {
+			detectedMimeType = "application/octet-stream";
+		}
+		return detectedMimeType;
 	}
 
 }
