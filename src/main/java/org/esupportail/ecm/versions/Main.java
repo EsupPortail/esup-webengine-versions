@@ -75,74 +75,129 @@ public class Main extends ModuleRoot {
 		else
 			doc = session.getDocument(docRef);
 		if (doc.isDownloadable()) {
-			Property propertyFile = doc.getProperty("file:content");
-			if (propertyFile != null) {
-				requestedBlob = (Blob) propertyFile.getValue();
-				if (requestedBlob == null) {
-					throw new WebResourceNotFoundException(
-							"No attached file at " + "file:content");
-				}
-				requestedFilename = requestedBlob.getFilename();
-				if (requestedFilename == null) {
-					propertyFile = propertyFile.getParent();
-					log.debug("resolve :: propertyFile="+propertyFile);
-					if (propertyFile.isComplex()) { // special handling for file
-						// and files schema
-						try {
-							requestedFilename = (String) propertyFile
-							.getValue("filename");
-							log.debug("resolve :: requestedFilename="+requestedFilename);
-						} catch (PropertyException e) {
-							requestedFilename = "Unknown";
-						}
-					}
-				}	
-				requestedObject = Response.ok(requestedBlob).header(
-						"Content-Disposition",
-						"inline; filename=" + requestedFilename).type(
-								requestedBlob.getMimeType()).build();
-				if (requestedFilename.endsWith(".zip")) {
-					try {
-						String tempdir = System.getProperty("java.io.tmpdir");
-						log.debug("resolve :: tempdir="+tempdir);
-						java.io.File zipFile = new java.io.File(tempdir,
-								"nuxeo-esup-webengine-" + versionUid + ".zip");
-						zipDirectory = new java.io.File(tempdir,
-								"nuxeo-esup-webengine-" + versionUid);
-						if(!zipDirectory.exists()) {					
-							InputStream inputStream = requestedBlob.getStream();
-							OutputStream out = new FileOutputStream(zipFile);
-							byte buf[] = new byte[1024];
-							int len;
-							while ((len = inputStream.read(buf)) > 0)
-								out.write(buf, 0, len);
-							out.close();
-							inputStream.close();
-							de.schlichtherle.io.File trueZipFile = new de.schlichtherle.io.File(zipFile);
-							trueZipFile.copyAllTo(zipDirectory);
-						}
-						File[] files = zipDirectory.listFiles();
-						Object requestedObjectTemp = null; 
-						// if one directory element
-						if (files!=null && files.length==1 && files[0].isDirectory()) {
-							log.debug("resolve :: one directory element :: "+files[0].getName());
-							requestedObjectTemp = getRequestedObjectFromFiles(versionUid, files[0].getName(), files[0].listFiles());
-						}
-						// some files or directories
-						else {
-							log.debug("resolve :: files elements");
-							requestedObjectTemp = getRequestedObjectFromFiles(versionUid, null, files);
-						}
-						if (requestedObjectTemp!=null) {
-							requestedObject = requestedObjectTemp;
-						}
-					} catch (Exception ie) {
-						log.error(
-								"problem unziping zip file from document version :"
-								+ versionUid, ie);
-					}
-				} 
+			procedDownloadable(versionUid, doc);
+		}
+		if (doc.hasSchema("note")) {
+			procedNote(versionUid, doc);
+		}
+	}
+
+	/**
+	 * @param versionUid
+	 * @param doc
+	 * @throws PropertyException
+	 * @throws ClientException
+	 */
+	private void procedDownloadable(String versionUid, DocumentModel doc)
+			throws PropertyException, ClientException {
+		Blob requestedBlob;
+		String requestedFilename;
+		Property propertyFile = doc.getProperty("file:content");
+		if (propertyFile != null) {
+			requestedBlob = (Blob) propertyFile.getValue();
+			if (requestedBlob == null) {
+				throw new WebResourceNotFoundException(
+						"No attached file at " + "file:content");
 			}
+			requestedFilename = requestedBlob.getFilename();
+			if (requestedFilename == null) {
+				propertyFile = propertyFile.getParent();
+				log.debug("resolve :: propertyFile="+propertyFile);
+				if (propertyFile.isComplex()) { // special handling for file
+					// and files schema
+					try {
+						requestedFilename = (String) propertyFile
+						.getValue("filename");
+						log.debug("resolve :: requestedFilename="+requestedFilename);
+					} catch (PropertyException e) {
+						requestedFilename = "Unknown";
+					}
+				}
+			}	
+			requestedObject = Response.ok(requestedBlob).header(
+					"Content-Disposition",
+					"inline; filename=" + requestedFilename).type(
+							requestedBlob.getMimeType()).build();
+			if (requestedFilename.endsWith(".zip")) {
+				try {
+					String tempdir = System.getProperty("java.io.tmpdir");
+					log.debug("resolve :: tempdir="+tempdir);
+					java.io.File zipFile = new java.io.File(tempdir,
+							"nuxeo-esup-webengine-" + versionUid + ".zip");
+					zipDirectory = new java.io.File(tempdir,
+							"nuxeo-esup-webengine-" + versionUid);
+					if(!zipDirectory.exists()) {					
+						InputStream inputStream = requestedBlob.getStream();
+						OutputStream out = new FileOutputStream(zipFile);
+						byte buf[] = new byte[1024];
+						int len;
+						while ((len = inputStream.read(buf)) > 0)
+							out.write(buf, 0, len);
+						out.close();
+						inputStream.close();
+						de.schlichtherle.io.File trueZipFile = new de.schlichtherle.io.File(zipFile);
+						trueZipFile.copyAllTo(zipDirectory);
+					}
+					File[] files = zipDirectory.listFiles();
+					Object requestedObjectTemp = null; 
+					// if one directory element
+					if (files!=null && files.length==1 && files[0].isDirectory()) {
+						log.debug("resolve :: one directory element :: "+files[0].getName());
+						requestedObjectTemp = getRequestedObjectFromFiles(versionUid, files[0].getName(), files[0].listFiles());
+					}
+					// some files or directories
+					else {
+						log.debug("resolve :: files elements");
+						requestedObjectTemp = getRequestedObjectFromFiles(versionUid, null, files);
+					}
+					if (requestedObjectTemp!=null) {
+						requestedObject = requestedObjectTemp;
+					}
+				} catch (Exception ie) {
+					log.error(
+							"problem unziping zip file from document version :"
+							+ versionUid, ie);
+				}
+			} 
+		}
+	}
+
+	/**
+	 * @param versionUid
+	 * @param doc
+	 * @throws PropertyException
+	 * @throws ClientException
+	 */
+	private void procedNote(String versionUid, DocumentModel doc)
+			throws PropertyException, ClientException {
+		String requestedFilename = null;
+		String requestedContent = null;
+		String requestedMimeType = null;
+		//TODO trouver: 
+		Property property = null;
+		//file name
+		property = doc.getProperty("dublincore:title");
+		if (property != null) {
+			requestedFilename = property.getValue() + ".txt";			
+		}
+		//content
+		property = doc.getProperty("note:note");
+		if (property != null) {
+			requestedContent = (String) property.getValue();			
+		}
+		//mime_type
+		property = doc.getProperty("note:mime_type");
+		if (property != null) {
+			requestedMimeType = (String) property.getValue();
+			if (requestedMimeType == null) {
+				requestedMimeType = "text/plain";
+			}
+		}
+		if (requestedFilename != null && requestedContent != null && requestedMimeType != null) {
+			requestedObject = Response.ok(requestedContent).header(
+					"Content-Disposition",
+					"inline; filename=" + requestedFilename).type(
+							requestedMimeType).build();			
 		}
 	}
 
