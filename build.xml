@@ -1,0 +1,118 @@
+<?xml version="1.0"?>
+<project name="esup-webengine-versions" default="deploy" basedir=".">
+
+  <!-- From the pom.xml -->
+  <property name="name" value="esup-webengine-versions" />
+  <property name="version" value="1.0-SNAPSHOT" />
+
+  <!-- Create a build.properties file from build.properties.sample
+       if you wish to override the JBoss paths -->
+  <property file="build.properties" />
+  <property name="jboss.dir" value="/opt/jboss" />
+
+  <property name="javac.debug" value="true" />
+  <property name="javac.deprecation" value="false" />
+
+  <!-- Boilerplate configuration -->
+  <property name="build.dir" value="${basedir}/target" />
+  <property name="deploy.dir" value="${jboss.dir}/server/default/deploy" />
+  <property name="nuxeo.ear" value="nuxeo.ear" />
+  <property name="mvn.opts" value="" />
+
+  <condition property="osfamily-unix">
+    <os family="unix" />
+  </condition>
+  <condition property="osfamily-windows">
+    <os family="windows" />
+  </condition>
+
+	<!-- ==================== deploy Target =================================== -->
+	<target name="deploy" depends="clean-target,install" description="Build and copy to JBoss" />
+	
+	
+	
+	<property name="utils.dir" value="utils" />
+	<property name="maven.url" value="http://www.apache.org/dist/maven/binaries" />
+	<property name="maven.version" value="2.2.0" />
+	<property name="maven.zipfile" value="apache-maven-${maven.version}-bin.zip" />
+	<property name="maven.bin" value="/opt/src/nuxeo-5.4/utils/apache-maven-2.2.1/bin/" />
+
+	<!-- ==================== depends-maven Target =================================== -->
+	<target name="depends-maven">
+		<available property="maven.dir.available" file="${maven.bin}"/>
+	</target>
+
+	<!-- ==================== download-maven Target =================================== -->
+	<target name="download-maven" unless="maven.dir.available">
+		<echo message="${maven.bin} non trouve, je telecharge..."/>
+		<mkdir dir="utils"/>
+		<get src="${maven.url}/${maven.zipfile}" dest="${utils.dir}/${maven.zipfile}"/>
+		<unzip src="${utils.dir}/${maven.zipfile}" dest="${utils.dir}"/>
+		<delete file="${utils.dir}/${maven.zipfile}"/>
+		<echo message="maven.bin=${maven.bin}"/>
+		<chmod dir="${maven.bin}" perm="755" includes="**/mvn*"/>
+	</target>
+	
+	
+	
+
+	  <target name="install" depends="depends-maven,download-maven,install-unix,install-windows" description="Build" />
+  <target name="install-unix" if="osfamily-unix">
+  	<echo message="execute ${maven.bin}/mvn"/>
+  	<exec executable="${maven.bin}/mvn" failonerror="false">
+      <arg value="install" />
+      <arg value="-Dmaven.test.skip=true" />
+    </exec>
+  </target>
+  <target name="install-windows" if="osfamily-windows">
+  	<echo message="execute ${maven.bin}/mvn.bat"/>
+  	<exec executable="cmd" failonerror="true">
+      <arg value="/c" />
+  		<arg value="${maven.bin}/mvn.bat" />
+      <arg value="install" />
+      <arg value="-Dmaven.test.skip=true" />
+    </exec>
+  </target>
+
+  <target name="copy" description="Copy files to JBoss">
+    <delete>
+      <!-- delete old versions of the project -->
+      <fileset file="${deploy.dir}/${nuxeo.ear}/plugins/${name}-*.jar" />
+    </delete>
+    <copy todir="${deploy.dir}/${nuxeo.ear}/plugins/" overwrite="true">
+      <fileset dir="${build.dir}" casesensitive="yes">
+        <include name="${name}-*.jar" />
+        <exclude name="${name}-*-sources.jar" />
+      </fileset>
+    </copy>
+    <!-- Could copy other files to .../config too -->
+  </target>
+
+  <target name="eclipseeclipse" depends="eclipseeclipse-unix,eclipseeclipse-windows" description="Build" />
+  <target name="eclipseeclipse-unix" if="osfamily-unix">
+    <exec executable="mvn" failonerror="true">
+      <arg value="eclipse:eclipse" />
+      <arg value="${mvn.opts}" />
+    </exec>
+  </target>
+  <target name="eclipseeclipse-windows" if="osfamily-windows">
+    <exec executable="cmd" failonerror="true">
+      <arg value="/c" />
+      <arg value="mvn.bat" />
+      <arg value="eclipse:eclipse" />
+      <arg value="${mvn.opts}" />
+    </exec>
+  </target>
+
+  <target name="web" description="Copy web files to a live JBoss">
+    <copy todir="${deploy.dir}/${nuxeo.ear}/nuxeo.war" overwrite="true">
+      <fileset dir="${basedir}/src/main/resources/nuxeo.war/" />
+    </copy>
+  </target>
+
+
+  <target name="clean-target" description="clean target">
+    <delete  dir="target"/>
+  </target>	
+
+</project>
