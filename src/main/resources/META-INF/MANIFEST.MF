@@ -1,0 +1,9 @@
+Manifest-Version: 1.0
+Bundle-ManifestVersion: 1
+Bundle-Name: esup-webengine-versions project
+Bundle-SymbolicName: org.esupportail.ecm.versions;singleton:=true
+Bundle-Version: 1.0.0
+Bundle-Vendor: Nuxeo
+Provide-Package: org.esupportail.ecm.versions
+Require-Bundle: org.nuxeo.ecm.webengine.core
+Nuxeo-WebModule: org.nuxeo.ecm.webengine.app.WebEngineModule
