@@ -347,6 +347,13 @@ public class Main extends ModuleRoot {
 		MimetypeRegistry mimeService = Framework.getService(MimetypeRegistry.class);
 		String detectedMimeType = mimeService.getMimetypeFromFilenameAndBlobWithDefault(
 				fileName, blog, null);
+		// force Mime-Type for css and js files
+		if (fileName.endsWith(".css")) {
+			detectedMimeType = "text/css";
+		}
+		else if (fileName.endsWith(".js")) {
+			detectedMimeType = "application/javascript";
+		}
 		if (detectedMimeType == null) {
 			detectedMimeType = "application/octet-stream";
 		}
