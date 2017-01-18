@@ -9,8 +9,8 @@
 
 
     <!--  be sure no directory with that name exists -->
-    <delete path="esup-ecm-plugin.tmp"/>
-    <mkdir path="esup-ecm-plugin.tmp"/>
+    <delete path="${bundle.fileName}.tmp"/>
+    <mkdir path="${bundle.fileName}.tmp"/>
 
     <unzip from="${bundle.fileName}/" to="${bundle.fileName}.tmp">
       <include>l10n/*.properties</include>
