@@ -6,18 +6,33 @@
   <property name="version" value="1.0-SNAPSHOT" />
 
   <!-- Create a build.properties file from build.properties.sample
-       if you wish to override the JBoss paths -->
+       if you wish to override the JBoss/Tomcat paths -->
   <property file="build.properties" />
+	
   <property name="jboss.dir" value="/opt/jboss" />
+		
+  <property name="nuxeo.ear" value="nuxeo.ear" />
 
   <property name="javac.debug" value="true" />
   <property name="javac.deprecation" value="false" />
 
   <!-- Boilerplate configuration -->
-  <property name="build.dir" value="${basedir}/target" />
-  <property name="deploy.dir" value="${jboss.dir}/server/default/deploy" />
-  <property name="nuxeo.ear" value="nuxeo.ear" />
-  <property name="mvn.opts" value="" />
+	
+  	<property name="build.dir" value="${basedir}/target" />
+ 
+	<condition property="deploy.dir" value="${tomcat.dir}/templates/custom/bundles" else="${jboss.dir}/server/default/deploy/${nuxeo.ear}/plugins">
+	   <isset property="tomcat.dir"/>
+	</condition>
+
+	<condition property="deployed.dir" value="${tomcat.dir}/nxserver/bundles" else="${jboss.dir}/server/default/deploy/${nuxeo.ear}/plugins">
+	   <isset property="tomcat.dir"/>
+	</condition>
+
+	<condition property="deploy.war" value="${tomcat.dir}/nxserver/web/root.war" else="${jboss.dir}/server/default/deploy/${nuxeo.ear}/nuxeo.war">
+	   <isset property="tomcat.dir"/>
+	</condition>
+  
+	<property name="mvn.opts" value="-Dmaven.test.skip=true" />
 
   <condition property="osfamily-unix">
     <os family="unix" />
@@ -27,15 +42,48 @@
   </condition>
 
 	<!-- ==================== deploy Target =================================== -->
-	<target name="deploy" depends="clean-target,install,copy" description="Build and copy to JBoss" />
+	<target name="deploy" depends="clean-target,install,copy" description="Build and copy to JBoss/Tomcat" />
 	
 	
 	
 	<property name="utils.dir" value="utils" />
 	<property name="maven.url" value="http://www.apache.org/dist/maven/binaries" />
-	<property name="maven.version" value="2.2.0" />
+	<property name="maven.version" value="3.2.2" />
 	<property name="maven.zipfile" value="apache-maven-${maven.version}-bin.zip" />
+	<property name="maven.dir" value="${basedir}/${utils.dir}/apache-maven-${maven.version}" />
 	<property name="maven.bin" value="${basedir}/${utils.dir}/apache-maven-${maven.version}/bin" />
+	
+	<macrodef name="maven">
+    <attribute name="options" default="${mvn.opts}" />
+    <attribute name="goal" />
+    <attribute name="basedir" />
+    <attribute name="resultproperty" default="maven.result" />
+    <element name="args" implicit="true" optional="true" />
+    <sequential>
+    	<!-- l'attribut Nuxeo-WebModule dépasse la limite de  72 car./ligne, il est tronqué
+    	<manifest file="${basedir}/src/main/resources/META-INF/MANIFEST.MF" mode="update">
+    	    <attribute name="Nuxeo-WebModule" value="org.nuxeo.ecm.webengine.app.WebEngineModule;extends=base;package=org/esupportail/ecm/versions;name=${name}"/>
+    	 </manifest>
+    	-->
+     <java classname="org.codehaus.classworlds.Launcher" fork="true"
+            dir="@{basedir}" resultproperty="@{resultproperty}">
+        <jvmarg value="-Xmx512m"/>
+        <classpath>
+          <fileset dir="${maven.dir}/boot">
+            <include name="*.jar" />
+          </fileset>
+          <fileset dir="${maven.dir}/lib">
+            <include name="*.jar" />
+          </fileset>
+        </classpath>
+        <sysproperty key="classworlds.conf" value="${maven.bin}/m2.conf" />
+        <sysproperty key="maven.home" value="${maven.dir}" />
+      	<sysproperty key="maven.multiModuleProjectDirectory" value="${maven.dir}"/>
+        <arg line="--batch-mode @{options} @{goal}" />
+      </java>
+        </sequential>
+  </macrodef>
+
 
 	<!-- ==================== depends-maven Target =================================== -->
 	<target name="depends-maven">
@@ -53,33 +101,18 @@
 		<chmod dir="${maven.bin}" perm="755" includes="**/mvn*"/>
 	</target>
 	
-	
-	
+	<target name="install" depends="depends-maven,download-maven" description="Build">
+  		<echo message="execute mvn install"/>
+		<maven basedir="${basedir}" goal="install" resultproperty="maven.build.result"/>
+  	</target>
 
-	  <target name="install" depends="depends-maven,download-maven,install-unix,install-windows" description="Build" />
-  <target name="install-unix" if="osfamily-unix">
-  	<echo message="execute ${maven.bin}/mvn"/>
-  	<exec executable="${maven.bin}/mvn" failonerror="false">
-      <arg value="install" />
-      <arg value="-Dmaven.test.skip=true" />
-    </exec>
-  </target>
-  <target name="install-windows" if="osfamily-windows">
-  	<echo message="execute ${maven.bin}/mvn.bat"/>
-  	<exec executable="cmd" failonerror="true">
-      <arg value="/c" />
-  		<arg value="${maven.bin}/mvn.bat" />
-      <arg value="install" />
-      <arg value="-Dmaven.test.skip=true" />
-    </exec>
-  </target>
-
-  <target name="copy" description="Copy files to JBoss">
+   <target name="copy" description="Copy files to JBoss/Tomcat">
     <delete>
       <!-- delete old versions of the project -->
-      <fileset file="${deploy.dir}/${nuxeo.ear}/plugins/${name}-*.jar" />
+      <fileset file="${deploy.dir}/${name}-*.jar" />
     </delete>
-    <copy todir="${deploy.dir}/${nuxeo.ear}/plugins/" overwrite="true">
+	<echo message="copy files to JBoss/Tomcat"/>
+  	<copy todir="${deploy.dir}/" overwrite="true">
       <fileset dir="${build.dir}" casesensitive="yes">
         <include name="${name}-*.jar" />
         <exclude name="${name}-*-sources.jar" />
@@ -88,31 +121,22 @@
     <!-- Could copy other files to .../config too -->
   </target>
 
-  <target name="eclipseeclipse" depends="eclipseeclipse-unix,eclipseeclipse-windows" description="Build" />
-  <target name="eclipseeclipse-unix" if="osfamily-unix">
-    <exec executable="mvn" failonerror="true">
-      <arg value="eclipse:eclipse" />
-      <arg value="${mvn.opts}" />
-    </exec>
-  </target>
-  <target name="eclipseeclipse-windows" if="osfamily-windows">
-    <exec executable="cmd" failonerror="true">
-      <arg value="/c" />
-      <arg value="mvn.bat" />
-      <arg value="eclipse:eclipse" />
-      <arg value="${mvn.opts}" />
-    </exec>
+  <target name="eclipseeclipse" depends="" description="Build">
+	<echo message="execute mvn eclipse:eclipse"/>
+	<maven basedir="${basedir}" goal="eclipse:eclipse" resultproperty="maven.build.result"/>
   </target>
 
-  <target name="web" description="Copy web files to a live JBoss">
-    <copy todir="${deploy.dir}/${nuxeo.ear}/nuxeo.war" overwrite="true">
-      <fileset dir="${basedir}/src/main/resources/nuxeo.war/" />
+  <target name="web" description="Copy web files to a live JBoss/Tomcat">
+    <copy todir="${deploy.war}/modules/${name}" overwrite="true">
+      <fileset dir="${basedir}/src/main/resources" />
     </copy>
   </target>
 
-
+	
   <target name="clean-target" description="clean target">
     <delete  dir="target"/>
   </target>	
 
+	
+	
 </project>

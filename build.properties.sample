@@ -1,9 +1,18 @@
 # Copy this file into build.properties and customize it
 
-# Uncomment this for Windows (notice the forward-slashes)
-jboss.dir=C:/Program Files/JBoss
-# Uncomment this for Unix
-#jboss.dir=/opt/jboss
+# jboss directory
+# Example for Windows (notice the forward-slashes):
+# jboss.dir=C:/Program Files/JBoss
+# Example for Unix;
+# jboss.dir=/opt/jboss
+jboss.dir=[PATH_JBOSS_NUXEO]
+
+# Which JBoss server config to use
+jboss.config=default
+
+# Which Tomcat server config to use
+tomcat.dir=[PATH_TOMCAT_NUXEO]
+
 
 # Uncomment this for an offline maven build, which is faster
 # but assumes you have already donwloaded all dependencies
