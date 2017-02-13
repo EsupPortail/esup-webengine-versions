@@ -3,46 +3,25 @@
 
   <!-- From the pom.xml -->
   <property name="name" value="esup-webengine-versions" />
-  <property name="version" value="1.0-SNAPSHOT" />
+  <property name="version" value="2.0.0-SNAPSHOT" />
 
   <!-- Create a build.properties file from build.properties.sample
        if you wish to override the JBoss/Tomcat paths -->
   <property file="build.properties" />
-	
-  <property name="jboss.dir" value="/opt/jboss" />
-		
-  <property name="nuxeo.ear" value="nuxeo.ear" />
-
+			
   <property name="javac.debug" value="true" />
   <property name="javac.deprecation" value="false" />
 
   <!-- Boilerplate configuration -->
 	
   	<property name="build.dir" value="${basedir}/target" />
+  	<property name="bundle.dir" value="${basedir}/package/install/bundles" />
+  	<property name="package.dir" value="${basedir}/package" />
  
-	<condition property="deploy.dir" value="${tomcat.dir}/templates/custom/bundles" else="${jboss.dir}/server/default/deploy/${nuxeo.ear}/plugins">
-	   <isset property="tomcat.dir"/>
-	</condition>
-
-	<condition property="deployed.dir" value="${tomcat.dir}/nxserver/bundles" else="${jboss.dir}/server/default/deploy/${nuxeo.ear}/plugins">
-	   <isset property="tomcat.dir"/>
-	</condition>
-
-	<condition property="deploy.war" value="${tomcat.dir}/nxserver/web/root.war" else="${jboss.dir}/server/default/deploy/${nuxeo.ear}/nuxeo.war">
-	   <isset property="tomcat.dir"/>
-	</condition>
-  
 	<property name="mvn.opts" value="-Dmaven.test.skip=true" />
 
-  <condition property="osfamily-unix">
-    <os family="unix" />
-  </condition>
-  <condition property="osfamily-windows">
-    <os family="windows" />
-  </condition>
-
 	<!-- ==================== deploy Target =================================== -->
-	<target name="deploy" depends="clean-target,install,copy" description="Build and copy to JBoss/Tomcat" />
+	<target name="deploy" depends="clean-target,install,bundle,package" description="Build bundle and create package" />
 	
 	
 	
@@ -60,11 +39,7 @@
     <attribute name="resultproperty" default="maven.result" />
     <element name="args" implicit="true" optional="true" />
     <sequential>
-    	<!-- l'attribut Nuxeo-WebModule dépasse la limite de  72 car./ligne, il est tronqué
-    	<manifest file="${basedir}/src/main/resources/META-INF/MANIFEST.MF" mode="update">
-    	    <attribute name="Nuxeo-WebModule" value="org.nuxeo.ecm.webengine.app.WebEngineModule;extends=base;package=org/esupportail/ecm/versions;name=${name}"/>
-    	 </manifest>
-    	-->
+ 
      <java classname="org.codehaus.classworlds.Launcher" fork="true"
             dir="@{basedir}" resultproperty="@{resultproperty}">
         <jvmarg value="-Xmx512m"/>
@@ -106,32 +81,30 @@
 		<maven basedir="${basedir}" goal="install" resultproperty="maven.build.result"/>
   	</target>
 
-   <target name="copy" description="Copy files to JBoss/Tomcat">
+   <target name="bundle" description="create bundle">
     <delete>
       <!-- delete old versions of the project -->
-      <fileset file="${deploy.dir}/${name}-*.jar" />
+      <fileset file="${bundle.dir}/${name}-*.jar" />
     </delete>
-	<echo message="copy files to JBoss/Tomcat"/>
-  	<copy todir="${deploy.dir}/" overwrite="true">
+	<echo message="create bundle"/>
+  	<copy todir="${bundle.dir}/" overwrite="true">
       <fileset dir="${build.dir}" casesensitive="yes">
         <include name="${name}-*.jar" />
         <exclude name="${name}-*-sources.jar" />
       </fileset>
     </copy>
-    <!-- Could copy other files to .../config too -->
   </target>
 
+   <target name="package" description="create zip package">
+	<echo message="create zip package to be uploaded in Nuxeo"/>
+	<zip destfile="${name}-${version}.zip" basedir="${package.dir}"/>
+  </target>
+
+	
   <target name="eclipseeclipse" depends="" description="Build">
 	<echo message="execute mvn eclipse:eclipse"/>
 	<maven basedir="${basedir}" goal="eclipse:eclipse" resultproperty="maven.build.result"/>
   </target>
-
-  <target name="web" description="Copy web files to a live JBoss/Tomcat">
-    <copy todir="${deploy.war}/modules/${name}" overwrite="true">
-      <fileset dir="${basedir}/src/main/resources" />
-    </copy>
-  </target>
-
 	
   <target name="clean-target" description="clean target">
     <delete  dir="target"/>

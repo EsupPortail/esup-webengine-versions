@@ -1,0 +1,18 @@
+<package type="addon" name="esup-webengine-versions" version="2.0.0-SNAPSHOT">
+  <title>esup-webengine-versions</title>
+  <description>Un site webengine ESUP permettant d'afficher le lien permanent vers le fichier principal d'un document. Il permet aussi de visualiser, sans besoin de les télécharger, des fichiers complexes zippés, tels des ressources web statiques zippées.</description>
+  <classifier>Open Source</classifier>
+  <home-page>https://subversion.renater.fr/esup-ecm/orioai-nuxeo/branches/1.7-nuxeo7</home-page>
+  <vendor>Consortium ESUP-Portail</vendor>
+  <platforms>
+    <platform>cap-7.3*</platform>
+    <platform>cap-7.10*</platform>
+  </platforms>
+  <supported>false</supported>
+  <hotreload-support>false</hotreload-support>
+  <require-terms-and-conditions-acceptance>false</require-terms-and-conditions-acceptance>
+  <production-state>production_ready</production-state>
+  <license>Apache 2.0</license>
+  <license-url>https://www.esup-portail.org/wiki/display/ESUP/La+licence+ESUP-Portail</license-url>
+  <visibility>PUBLIC</visibility>
+</package>
