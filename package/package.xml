@@ -2,7 +2,7 @@
   <title>esup-webengine-versions</title>
   <description>Un site webengine ESUP permettant d'afficher le lien permanent vers le fichier principal d'un document. Il permet aussi de visualiser, sans besoin de les télécharger, des fichiers complexes zippés, tels des ressources web statiques zippées.</description>
   <classifier>Open Source</classifier>
-  <home-page>https://subversion.renater.fr/esup-ecm/orioai-nuxeo/branches/1.7-nuxeo7</home-page>
+  <home-page>https://github.com/EsupPortail/esup-webengine-versions/tree/esup-webengine-versions-7.10</home-page>
   <vendor>Consortium ESUP-Portail</vendor>
   <platforms>
     <platform>cap-7.3*</platform>
