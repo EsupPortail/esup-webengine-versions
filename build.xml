@@ -82,7 +82,7 @@
   	</target>
 
    <target name="bundle" description="create bundle">
-    <delete>
+    <delete quiet="true">
       <!-- delete old versions of the project -->
       <fileset file="${bundle.dir}/${name}-*.jar" />
     </delete>
@@ -109,7 +109,5 @@
   <target name="clean-target" description="clean target">
     <delete  dir="target"/>
   </target>	
-
-	
 	
 </project>
