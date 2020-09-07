@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<component name="esup-versions" version="1.0.0">
+  <require>org.nuxeo.runtime.started</require>
+
+  <extension target="org.nuxeo.ecm.platform.actions.ActionService" point="actions">
+
+    <action id="LienEsupVersions" label="label.permalink.esupversions.button"  order="20" type="fancybox"  icon="/icons/permalinkfile.png" accessKey="f">
+      <category>DOCUMENT_UPPER_ACTION</category>
+      <properties>
+         <property name="include">/incl/permalink_esup_box.xhtml</property>
+         <property name="ajaxSupport">true</property>
+      </properties>
+      <filter id="esupPermalinkFilter">
+        <rule grant="true">
+          <type>File</type>
+        </rule>
+        <rule grant="false">
+          <type>Folder</type>
+          <type>Workspace</type>
+        </rule> 
+       </filter>       
+    </action>
+  
+  </extension>
+  
+ 
+</component>

@@ -1,0 +1,15 @@
+Manifest-Version: 1.0
+Bundle-SymbolicName: esup-webengine-versions;singleton:=true
+Nuxeo-WebModule: org.nuxeo.ecm.webengine.app.WebEngineModule;extends=b
+ ase;package=org/esupportail/ecm/versions;name=esup-webengine-versions
+Bundle-ActivationPolicy: lazy
+Bundle-RequiredExecutionEnvironment: JavaSE-1.8
+Bundle-ManifestVersion: 2
+Bundle-Vendor: Nuxeo
+Nuxeo-Component: OSGI-INF/esup-versions.xml
+Ant-Version: Apache Ant 1.9.2
+Bundle-Name: esup-webengine-versions
+Bundle-Version: 1.0.qualifier
+Bundle-ClassPath: .
+Created-By: 1.8.0_111-b14 (Oracle Corporation)
+
