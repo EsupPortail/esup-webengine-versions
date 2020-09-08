@@ -13,7 +13,8 @@
       </properties>
       <filter id="esupPermalinkFilter">
         <rule grant="true">
-          <type>File</type>
+		<type>File</type>
+	        <type>mem-dc-memoire</type>
         </rule>
         <rule grant="false">
           <type>Folder</type>

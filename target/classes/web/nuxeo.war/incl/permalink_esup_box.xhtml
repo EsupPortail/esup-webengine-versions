@@ -16,7 +16,16 @@ xmlns:nxd="http://nuxeo.org/nxweb/document">
 <h:outputFormat value="#{messages['label.permalink.esupversions.description']} #{currentDocument.title}"/>
 </p>
 <c:set var="baseURL" value="${fn:replace(facesContext.externalContext.request.requestURL, facesContext.externalContext.request.requestURI, facesContext.externalContext.request.contextPath)}" />
-
+<c:if test="#{!currentDocument.isProxy()}">
+       <c:set var="docUUID" value="#{currentDocument.getId()}" />
+       <h:inputText class="permalinkFocus" readonly="true" onclick="javascript:this.focus();this.select();" size="120" value="#{baseURL}/site/esupversions/#{docUUID}"/>
+    </c:if>
+    <c:if test="#{currentDocument.isProxy()}">
+        <nxu:methodResult name="docVersion" value="#{documentManager.getSourceDocument(currentDocument.getRef())}">
+            <c:set var="docUUID" value="#{docVersion.getId()}" />
+            <h:inputText class="permalinkFocus" readonly="true" onclick="javascript:this.focus();this.select();" size="120" value="#{baseURL}/site/esupversions/#{docUUID}"/>
+        </nxu:methodResult>
+    </c:if>
 <h:outputScript target="#{pageJsTarget}">
 jQuery('.permalinkFocus').focus();jQuery('.permalinkFocus').select();
 </h:outputScript>
